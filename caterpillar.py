@@ -20,8 +20,9 @@ leaf.hideturtle()
 leaf.speed(0)
 
 game_started = False
+game_active = False
 text_turtle = t.Turtle()
-text_turtle.write('Press SPACE to start', align='center', font=('Arial', 16, 'bold'))
+text_turtle.penup()
 text_turtle.hideturtle()
 
 score_turtle = t.Turtle()
@@ -35,18 +36,20 @@ def outside_window():
     bottom_wall = -t.window_height() / 2
     (x, y) = caterpillar.pos()
     outside = \
-        x< left_wall or \
-        x> right_wall or \
-        y< bottom_wall or \
-        y> top_wall
+        x < left_wall or \
+        x > right_wall or \
+        y < bottom_wall or \
+        y > top_wall
     return outside
 
 def game_over():
+    global game_active
+    game_active = False
     caterpillar.color('yellow')
     leaf.color('yellow')
-    t.penup()
-    t.hideturtle()
-    t.write('GAME OVER!', align='center', font=('Arial', 30, 'normal'))
+    text_turtle.penup()
+    text_turtle.setpos(0, 0)
+    text_turtle.write('GAME OVER!\nPress SPACE to play again', align='center', font=('Arial', 30, 'normal'))
 
 def display_score(current_score):
     score_turtle.clear()
@@ -57,16 +60,67 @@ def display_score(current_score):
     score_turtle.write(str(current_score), align='right', font=('Arial', 40, 'bold'))
 
 def place_leaf():
-    leaf.ht()
+    leaf.hideturtle()
     leaf.setx(random.randint(-200, 200))
     leaf.sety(random.randint(-200, 200))
-    leaf.st()
+    leaf.color('green')
+    leaf.showturtle()
+
+def game_loop(caterpillar_speed, caterpillar_length, score):
+    global game_active
+
+    if not game_active:
+        return
+
+    caterpillar.forward(caterpillar_speed)
+
+    if caterpillar.distance(leaf) < 20:
+        place_leaf()
+        caterpillar_length = caterpillar_length + 1
+        caterpillar.shapesize(1, caterpillar_length, 1)
+        caterpillar_speed = caterpillar_speed + 1
+        score = score + 10
+        display_score(score)
+
+    if outside_window():
+        game_over()
+        return
+
+    t.ontimer(lambda: game_loop(caterpillar_speed, caterpillar_length, score), 50)
+
+def reset_game():
+    global game_started, game_active
+
+    # Reset turtles without clearing the screen
+    caterpillar.hideturtle()
+    caterpillar.setpos(0, 0)
+    caterpillar.setheading(0)
+    caterpillar.color('red')
+
+    leaf.hideturtle()
+    leaf.setpos(0,0)
+    leaf.color('green')
+
+    # Clear text elements
+    text_turtle.clear()
+    score_turtle.clear()
+
+    text_turtle.penup()
+    text_turtle.setpos(0, 0)
+    text_turtle.write('Press SPACE to start', align='center', font=('Arial', 16, 'bold'))
+    text_turtle.hideturtle()
+
+    game_started = False
+    game_active = False
 
 def start_game():
-    global game_started
+    global game_started, game_active
+
     if game_started:
         return
+
     game_started = True
+    game_active = True
 
     score = 0
     text_turtle.clear()
@@ -78,19 +132,7 @@ def start_game():
     display_score(score)
     place_leaf()
 
-    while True:
-        caterpillar.forward(caterpillar_speed)
-        if caterpillar.distance(leaf) < 20:
-            place_leaf()
-            caterpillar_length = caterpillar_length + 1
-            caterpillar.shapesize(1, caterpillar_length, 1)
-            caterpillar_speed = caterpillar_speed + 1
-            score = score + 10
-            display_score(score)
-        if outside_window():
-            game_over()
-            break
-
+    game_loop(caterpillar_speed, caterpillar_length, score)
 
 def move_up():
     if caterpillar.heading() == 0 or caterpillar.heading() == 180:
@@ -107,7 +149,22 @@ def move_left():
 def move_right():
     if caterpillar.heading() == 90 or caterpillar.heading() == 270:
         caterpillar.setheading(0)
-t.onkey(start_game, 'space')
+
+def handle_space():
+    global game_active
+    if not game_active:
+        reset_game()
+        start_game()
+    else:
+        start_game()
+
+# Show initial start message
+text_turtle.penup()
+text_turtle.setpos(0, 0)
+text_turtle.write('Press SPACE to start', align='center', font=('Arial', 16, 'bold'))
+text_turtle.hideturtle()
+
+t.onkey(handle_space, 'space')
 t.onkey(move_up, 'Up')
 t.onkey(move_right, 'Right')
 t.onkey(move_down, 'Down')
