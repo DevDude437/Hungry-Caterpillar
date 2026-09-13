@@ -6,7 +6,7 @@ In this computer game, the user controls the caterpillar's direction with the ar
 ![Game Interface](images/game.png)
 
 
-# Installation (Linux & Mac)
+# Installation (Unix Systems)
 Download the latest release to your `Downloads` folder
 
 Open the terminal and navigate to your `Downloads`
